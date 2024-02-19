@@ -182,6 +182,9 @@ class MainWindow(QWidget):
 
 
     def plot(self):
+        if self.plot_window is not None:
+            plt.close(self.plot_window)
+    
         amp = self.amplitude_input.value()
         f1 = self.frequency1_input.value()
         f2 = self.frequency2_input.value()
@@ -199,9 +202,6 @@ class MainWindow(QWidget):
 
         y1 = amp * np.sin(2 * np.pi * f1 * t1) # Wave 1
         y2 = amp * np.sin(2 * np.pi * f2 * t2) # Wave 2
-
-        if self.plot_window is not None:
-            plt.close(self.plot_window)
 
         self.plot_window = plt.figure(num="Sine Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
 
@@ -312,7 +312,7 @@ class MainWindow(QWidget):
         df.to_excel("fft.xlsx")
 
         plt.tight_layout()
-        plt.show()
+        self.plot_window.show()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         if self.plot_window is not None:
