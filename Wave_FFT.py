@@ -104,7 +104,13 @@ class MainWindow(QWidget):
             plt.close(self.plot_window)
 
         self.plot_window = plt.figure(figsize=(10, 6)) # Plot window
+
         df = pd.DataFrame() # Dataframe
+        df[f'{f1}khz Freq'] = y1
+        df[f'{f1}khz Time'] = t1
+        df[f'{f2}khz Freq'] = y2
+        df[f'{f2}khz Time'] = t2
+        df['Sample Rate'] = fs
 
         plt.subplot(3, 2, 1)
         plt.plot(t1, y1)
@@ -122,15 +128,20 @@ class MainWindow(QWidget):
 
         freq, amp = self.do_fft(y=y1, duration=duration)
 
-        df['1khz FFT Freq'] = freq
-        df['1khz FFT Amp'] = amp
+        df2 = pd.DataFrame() # Dataframe
+        df2[f'{f1}khz FFT Freq'] = freq
+        df2[f'{f1}khz FFT Amp'] = amp
 
-        idx_max_1 = np.argmax(amp)
-        print("Index of Max Amplitude: ", idx_max_1)
-        print("Max Amp of 1kHz: ", amp[idx_max_1], "Frequency of max Amp of 1kHz: ", freq[idx_max_1])
+        idx_max_first = np.argmax(amp)
+        print("Index of Max Amplitude: ", idx_max_first)
+        print("Max Amp of 1kHz: ", amp[idx_max_first], "Frequency of max Amp of 1kHz: ", freq[idx_max_first])
 
-        freq = freq[:idx_max_1*2+1]
-        amp = amp[:idx_max_1*2+1]
+        df3 = pd.DataFrame()
+        df3['Max Amp (First Wave)'] = [amp[idx_max_first]]
+        df3['Freq of Max Amp (First Wave)'] = [freq[idx_max_first]]
+
+        freq = freq[:idx_max_first*2+1]
+        amp = amp[:idx_max_first*2+1]
 
         plt.subplot(3, 2, 3)
         plt.plot(freq, amp)
@@ -141,15 +152,18 @@ class MainWindow(QWidget):
 
         freq, amp = self.do_fft(y=y2, duration=duration)
 
-        df['5khz FFT Freq'] = freq
-        df['5khz FFT Amp'] = amp
+        df2[f'{f2}khz FFT Freq'] = freq
+        df2[f'{f2}khz FFT Amp'] = amp
 
-        idx_max_5 = np.argmax(amp)
-        print("Index of Max Amplitude: ", idx_max_5)
-        print("Max Amp of 5kHz: ", amp[idx_max_5], "Frequency of max Amp of 5kHz: ", freq[idx_max_5])
+        idx_max_second = np.argmax(amp)
+        print("Index of Max Amplitude: ", idx_max_second)
+        print("Max Amp of 5kHz: ", amp[idx_max_second], "Frequency of max Amp of 5kHz: ", freq[idx_max_second])
 
-        freq = freq[:idx_max_5*2+1]
-        amp = amp[:idx_max_5*2+1]
+        df3['Max Amp (Second Wave)'] = [amp[idx_max_second]]
+        df3['Freq of Max Amp (Second Wave)'] = [freq[idx_max_second]]
+
+        freq = freq[:idx_max_second*2+1]
+        amp = amp[:idx_max_second*2+1]
 
         plt.subplot(3, 2, 4)
         plt.plot(freq, amp)
@@ -170,8 +184,8 @@ class MainWindow(QWidget):
 
         freq, amp = self.do_fft(y=y_combined, duration=duration)
 
-        df['Combined FFT Freq'] = freq
-        df['Combined FFT Amp'] = amp
+        df2['Combined FFT Freq'] = freq
+        df2['Combined FFT Amp'] = amp
 
         plt.subplot(3, 2, 6)
         plt.plot(freq, amp)
@@ -181,6 +195,8 @@ class MainWindow(QWidget):
         plt.grid(True)
         plt.xlim(0, f2*2)
 
+        df2 = pd.concat([df2, df3], axis=1)
+        df = pd.concat([df, df2], axis=1)
         df.to_excel("fft.xlsx")
 
         plt.tight_layout()
