@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget, QCheckBox
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -75,6 +75,10 @@ class MainWindow(QWidget):
         self.duration_input.setValue(0.005)
         layout.addWidget(QLabel("Duration (s)"))
         layout.addWidget(self.duration_input)
+
+        self.scale_axes = QCheckBox("Scale Axes to Peaks")
+        self.scale_axes.setChecked(True)
+        layout.addWidget(self.scale_axes)
 
         self.plot_button = QPushButton("Plot")
         self.plot_button.clicked.connect(self.plot)
@@ -214,8 +218,9 @@ class MainWindow(QWidget):
         df3['Max Amp (First Wave)'] = [amp[idx_max_first]]
         df3['Freq of Max Amp (First Wave)'] = [freq[idx_max_first]]
 
-        freq = freq[:idx_max_first*2+1]
-        amp = amp[:idx_max_first*2+1]
+        if self.scale_axes.isChecked():
+            freq = freq[:idx_max_first*2+1]
+            amp = amp[:idx_max_first*2+1]
 
         plt.subplot(3, 2, 3)
         plt.plot(freq, amp)
@@ -236,8 +241,9 @@ class MainWindow(QWidget):
         df3['Max Amp (Second Wave)'] = [amp[idx_max_second]]
         df3['Freq of Max Amp (Second Wave)'] = [freq[idx_max_second]]
 
-        freq = freq[:idx_max_second*2+1]
-        amp = amp[:idx_max_second*2+1]
+        if self.scale_axes.isChecked():
+            freq = freq[:idx_max_second*2+1]
+            amp = amp[:idx_max_second*2+1]
 
         plt.subplot(3, 2, 4)
         plt.plot(freq, amp)
@@ -264,7 +270,7 @@ class MainWindow(QWidget):
         df2['FFT - Combined Freq'] = freq
         df2['FFT - Combined FFT Amp'] = amp
 
-        idx_max_combined = np.argsort(amp)[::-1][:2]
+        idx_max_combined = np.argpartition(amp, -2)[-2:]
         print("Index of Max Amplitude Combined: ", idx_max_combined)
         print(f"Max Amp of Combined: ", amp[idx_max_combined], f"Frequency of max Amp of Combined: ", freq[idx_max_combined])
 
