@@ -50,18 +50,21 @@ class MainWindow(QWidget):
         self.frequency1_input = QSpinBox()
         self.frequency1_input.setRange(0, 100000)
         self.frequency1_input.setValue(1000)
+        self.frequency1_input.setSingleStep(100)
         layout.addWidget(QLabel("Wave 1 Frequency (Hz)"))
         layout.addWidget(self.frequency1_input)
 
         self.frequency2_input = QSpinBox()
         self.frequency2_input.setRange(0, 100000)
         self.frequency2_input.setValue(5000)
+        self.frequency2_input.setSingleStep(100)
         layout.addWidget(QLabel("Wave 2 Frequency (Hz)"))
         layout.addWidget(self.frequency2_input)
 
         self.sample_rate_input = QSpinBox()
         self.sample_rate_input.setRange(0, 1000000)
         self.sample_rate_input.setValue(44000)
+        self.sample_rate_input.setSingleStep(100)
         layout.addWidget(QLabel("Sample Rate (Hz)"))
         layout.addWidget(self.sample_rate_input)
 
@@ -177,22 +180,21 @@ class MainWindow(QWidget):
         self.plot_window = plt.figure(num="Sine Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
 
         df = pd.DataFrame()
-        df[f'{f1}khz Freq'] = y1
-        df[f'{f1}khz Time'] = t1
-        df[f'{f2}khz Freq'] = y2
-        df[f'{f2}khz Time'] = t2
-        df['Sample Rate'] = fs
+        df[f'{f1} hz Freq'] = y1
+        df[f'{f1} hz Time'] = t1
+        df[f'{f2} hz Freq'] = y2
+        df[f'{f2} hz Time'] = t2
 
         plt.subplot(3, 2, 1)
         plt.plot(t1, y1)
-        plt.title(f'Sine Wave at {f1}kHz', fontsize=8)
+        plt.title(f'Sine Wave at {f1} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
         plt.subplot(3, 2, 2)
         plt.plot(t2, y2)
-        plt.title(f'Sine Wave at {f2}kHz', fontsize=8)
+        plt.title(f'Sine Wave at {f2} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
@@ -200,14 +202,15 @@ class MainWindow(QWidget):
         freq, amp = self.do_fft(y=y1, duration=duration)
 
         df2 = pd.DataFrame()
-        df2[f'{f1}khz FFT Freq'] = freq
-        df2[f'{f1}khz FFT Amp'] = amp
+        df2[f'FFT - {f1} hz Freq'] = freq
+        df2[f'FFT - {f1} hz FFT Amp'] = amp
 
         idx_max_first = np.argmax(amp)
-        print("Index of Max Amplitude: ", idx_max_first)
-        print(f"Max Amp of {f1}kHz: ", amp[idx_max_first], f"Frequency of max Amp of {f1}kHz: ", freq[idx_max_first])
+        print("Index of Max Amplitude Wave 1: ", idx_max_first)
+        print(f"Max Amp of {f1} Hz: ", amp[idx_max_first], f"Frequency of max Amp of {f1} Hz: ", freq[idx_max_first])
 
         df3 = pd.DataFrame()
+        df3['Sample Rate'] = [fs]
         df3['Max Amp (First Wave)'] = [amp[idx_max_first]]
         df3['Freq of Max Amp (First Wave)'] = [freq[idx_max_first]]
 
@@ -216,19 +219,19 @@ class MainWindow(QWidget):
 
         plt.subplot(3, 2, 3)
         plt.plot(freq, amp)
-        plt.title(f'{f1}kHz (FFT)', fontsize=8)
+        plt.title(f'{f1} Hz (FFT)', fontsize=8)
         plt.xlabel('Frequency', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
         freq, amp = self.do_fft(y=y2, duration=duration)
 
-        df2[f'{f2}khz FFT Freq'] = freq
-        df2[f'{f2}khz FFT Amp'] = amp
+        df2[f'FFT - {f2} hz Freq'] = freq
+        df2[f'FFT - {f2} hz FFT Amp'] = amp
 
         idx_max_second = np.argmax(amp)
-        print("Index of Max Amplitude: ", idx_max_second)
-        print(f"Max Amp of {f2}kHz: ", amp[idx_max_second], f"Frequency of max Amp of {f2}kHz: ", freq[idx_max_second])
+        print("Index of Max Amplitude Wave 2: ", idx_max_second)
+        print(f"Max Amp of {f2} Hz: ", amp[idx_max_second], f"Frequency of max Amp of {f2} Hz: ", freq[idx_max_second])
 
         df3['Max Amp (Second Wave)'] = [amp[idx_max_second]]
         df3['Freq of Max Amp (Second Wave)'] = [freq[idx_max_second]]
@@ -238,13 +241,16 @@ class MainWindow(QWidget):
 
         plt.subplot(3, 2, 4)
         plt.plot(freq, amp)
-        plt.title(f'{f2}kHz (FFT)', fontsize=8)
+        plt.title(f'{f2} Hz (FFT)', fontsize=8)
         plt.xlabel('Frequency', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
         # Add both sine waves
         y_combined = y1 + y2
+
+        df[f'Combined Freq'] = y_combined
+        df[f'Combined Time'] = t1
 
         plt.subplot(3, 2, 5)
         plt.plot(t1, y_combined)
@@ -255,8 +261,15 @@ class MainWindow(QWidget):
 
         freq, amp = self.do_fft(y=y_combined, duration=duration)
 
-        df2['Combined FFT Freq'] = freq
-        df2['Combined FFT Amp'] = amp
+        df2['FFT - Combined Freq'] = freq
+        df2['FFT - Combined FFT Amp'] = amp
+
+        idx_max_combined = np.argsort(amp)[::-1][:2]
+        print("Index of Max Amplitude Combined: ", idx_max_combined)
+        print(f"Max Amp of Combined: ", amp[idx_max_combined], f"Frequency of max Amp of Combined: ", freq[idx_max_combined])
+
+        df3['Max Amp (Combined)'] = [amp[idx_max_combined]]
+        df3['Freq of Max Amp (Combined)'] = [freq[idx_max_combined]]
 
         plt.subplot(3, 2, 6)
         plt.plot(freq, amp)
