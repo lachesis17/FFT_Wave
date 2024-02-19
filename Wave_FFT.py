@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget, QCheckBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget, QCheckBox, QAbstractSpinBox
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -51,6 +51,8 @@ class MainWindow(QWidget):
         self.frequency1_input.setRange(0, 100000)
         self.frequency1_input.setValue(1000)
         self.frequency1_input.setSingleStep(100)
+        self.frequency1_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        self.frequency1_input.valueChanged.connect(self.change_default_duration)
         layout.addWidget(QLabel("Wave 1 Frequency (Hz)"))
         layout.addWidget(self.frequency1_input)
 
@@ -58,6 +60,8 @@ class MainWindow(QWidget):
         self.frequency2_input.setRange(0, 100000)
         self.frequency2_input.setValue(5000)
         self.frequency2_input.setSingleStep(100)
+        self.frequency2_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+        self.frequency2_input.valueChanged.connect(self.change_default_duration)
         layout.addWidget(QLabel("Wave 2 Frequency (Hz)"))
         layout.addWidget(self.frequency2_input)
 
@@ -65,14 +69,15 @@ class MainWindow(QWidget):
         self.sample_rate_input.setRange(0, 1000000)
         self.sample_rate_input.setValue(44000)
         self.sample_rate_input.setSingleStep(100)
+        self.sample_rate_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         layout.addWidget(QLabel("Sample Rate (Hz)"))
         layout.addWidget(self.sample_rate_input)
 
         self.duration_input = QDoubleSpinBox()
-        self.duration_input.setRange(0, 0.10)
+        self.duration_input.setRange(0.002, 0.20)
         self.duration_input.setSingleStep(0.001)
         self.duration_input.setDecimals(3)
-        self.duration_input.setValue(0.005)
+        self.duration_input.setValue(0.020)
         layout.addWidget(QLabel("Duration (s)"))
         layout.addWidget(self.duration_input)
 
@@ -138,6 +143,23 @@ class MainWindow(QWidget):
         self.media_player.setMedia(media)
         self.media_player.setVolume(20)
         self.media_player.play()
+
+    def change_default_duration(self):
+        # when the min frequency is too small without a long enough duration, the increments for FFQ don't give correct indexes
+        max_freq = max([self.frequency1_input.value(), self.frequency2_input.value()])
+        min_freq = min([self.frequency1_input.value(), self.frequency2_input.value()])
+        if min_freq < 100:
+            self.duration_input.setValue(0.035)
+            return
+        if min_freq <= 200:
+            self.duration_input.setValue(0.020)
+            return
+        if max_freq < 10000 and max_freq > 1000:
+            self.duration_input.setValue(0.005)
+            return
+        if max_freq > 10000:
+            self.duration_input.setValue(0.002)
+            return
 
 
     def do_fft(self, duration, y):
