@@ -10,6 +10,7 @@ __pycache__/
 *pyinstaller.json
 *.xlsx
 *.png
+*.wav
 
 # Distribution / packaging
 .Python

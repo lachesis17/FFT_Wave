@@ -1,8 +1,11 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtCore import QUrl
+from scipy.io.wavfile import write as write_wav
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.fft as fft
@@ -22,7 +25,21 @@ class MainWindow(QWidget):
         self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint) # Force top level
 
         self.plot_window = None
+        self.media_player = QMediaPlayer()
         layout = QVBoxLayout()
+
+        button_layout = QHBoxLayout()
+        self.play_wave_1_but = QPushButton("Play Wave 1")
+        self.play_wave_2_but = QPushButton("Play Wave 2")
+        self.play_combined_but = QPushButton("Play Combined")
+        self.play_wave_1_but.clicked.connect(self.play_wave_1)
+        self.play_wave_2_but.clicked.connect(self.play_wave_2)
+        self.play_combined_but.clicked.connect(self.play_combined)
+
+        button_layout.addWidget(self.play_wave_1_but)
+        button_layout.addWidget(self.play_wave_2_but)
+        button_layout.addWidget(self.play_combined_but)
+        layout.addLayout(button_layout)
 
         self.amplitude_input = QSpinBox()
         self.amplitude_input.setRange(0, 1000)
@@ -33,13 +50,13 @@ class MainWindow(QWidget):
         self.frequency1_input = QSpinBox()
         self.frequency1_input.setRange(0, 100000)
         self.frequency1_input.setValue(1000)
-        layout.addWidget(QLabel("Frequency 1 (Hz)"))
+        layout.addWidget(QLabel("Wave 1 Frequency (Hz)"))
         layout.addWidget(self.frequency1_input)
 
         self.frequency2_input = QSpinBox()
         self.frequency2_input.setRange(0, 100000)
         self.frequency2_input.setValue(5000)
-        layout.addWidget(QLabel("Frequency 2 (Hz)"))
+        layout.addWidget(QLabel("Wave 2 Frequency (Hz)"))
         layout.addWidget(self.frequency2_input)
 
         self.sample_rate_input = QSpinBox()
@@ -61,6 +78,60 @@ class MainWindow(QWidget):
         layout.addWidget(self.plot_button)
 
         self.setLayout(layout)
+
+    def play_wave_1(self):
+        self.media_player.stop()
+        self.media_player.setMedia(QMediaContent(None))
+
+        samplerate = self.sample_rate_input.value(); fs = self.frequency1_input.value()
+        t = np.linspace(0., 1., samplerate)
+        amplitude = np.iinfo(np.int16).max
+        data = amplitude * np.sin(2. * np.pi * fs * t)
+        wave_file = "Wave_1.wav"
+        write_wav(wave_file, samplerate, data.astype(np.int16))
+
+        media = QMediaContent(QUrl.fromLocalFile(wave_file))
+        self.media_player.setMedia(media)
+        self.media_player.setVolume(20)
+        self.media_player.play()
+
+    def play_wave_2(self):
+        self.media_player.stop()
+        self.media_player.setMedia(QMediaContent(None))
+
+        samplerate = self.sample_rate_input.value(); fs = self.frequency2_input.value()
+        t = np.linspace(0., 1., samplerate)
+        amplitude = np.iinfo(np.int16).max
+        data = amplitude * np.sin(2. * np.pi * fs * t)
+        wave_file = "Wave_2.wav"
+        write_wav(wave_file, samplerate, data.astype(np.int16))
+
+        media = QMediaContent(QUrl.fromLocalFile(wave_file))
+        self.media_player.setMedia(media)
+        self.media_player.setVolume(20)
+        self.media_player.play()
+
+    def play_combined(self):
+        self.media_player.stop()
+        self.media_player.setMedia(QMediaContent(None))
+
+        samplerate = self.sample_rate_input.value(); fs = self.frequency1_input.value()
+        t = np.linspace(0., 1., samplerate)
+        amplitude = np.iinfo(np.int16).max
+        data1 = amplitude * np.sin(2. * np.pi * fs * t)
+        samplerate = self.sample_rate_input.value(); fs = self.frequency2_input.value()
+        t = np.linspace(0., 1., samplerate)
+        amplitude = np.iinfo(np.int16).max
+        data2 = amplitude * np.sin(2. * np.pi * fs * t)
+        data = data1 + data2
+        wave_file = "Wave_Combined.wav"
+        write_wav(wave_file, samplerate, data.astype(np.int16))
+
+        media = QMediaContent(QUrl.fromLocalFile(wave_file))
+        self.media_player.setMedia(media)
+        self.media_player.setVolume(20)
+        self.media_player.play()
+
 
     def do_fft(self, duration, y):
         fft_s = fft.fft(y, overwrite_x=False)
@@ -103,9 +174,9 @@ class MainWindow(QWidget):
         if self.plot_window is not None:
             plt.close(self.plot_window)
 
-        self.plot_window = plt.figure(figsize=(10, 6)) # Plot window
+        self.plot_window = plt.figure(num="Sine Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
 
-        df = pd.DataFrame() # Dataframe
+        df = pd.DataFrame()
         df[f'{f1}khz Freq'] = y1
         df[f'{f1}khz Time'] = t1
         df[f'{f2}khz Freq'] = y2
@@ -128,13 +199,13 @@ class MainWindow(QWidget):
 
         freq, amp = self.do_fft(y=y1, duration=duration)
 
-        df2 = pd.DataFrame() # Dataframe
+        df2 = pd.DataFrame()
         df2[f'{f1}khz FFT Freq'] = freq
         df2[f'{f1}khz FFT Amp'] = amp
 
         idx_max_first = np.argmax(amp)
         print("Index of Max Amplitude: ", idx_max_first)
-        print("Max Amp of 1kHz: ", amp[idx_max_first], "Frequency of max Amp of 1kHz: ", freq[idx_max_first])
+        print(f"Max Amp of {f1}kHz: ", amp[idx_max_first], f"Frequency of max Amp of {f1}kHz: ", freq[idx_max_first])
 
         df3 = pd.DataFrame()
         df3['Max Amp (First Wave)'] = [amp[idx_max_first]]
@@ -157,7 +228,7 @@ class MainWindow(QWidget):
 
         idx_max_second = np.argmax(amp)
         print("Index of Max Amplitude: ", idx_max_second)
-        print("Max Amp of 5kHz: ", amp[idx_max_second], "Frequency of max Amp of 5kHz: ", freq[idx_max_second])
+        print(f"Max Amp of {f2}kHz: ", amp[idx_max_second], f"Frequency of max Amp of {f2}kHz: ", freq[idx_max_second])
 
         df3['Max Amp (Second Wave)'] = [amp[idx_max_second]]
         df3['Freq of Max Amp (Second Wave)'] = [freq[idx_max_second]]
