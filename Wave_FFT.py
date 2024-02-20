@@ -1,8 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QSpinBox, QDesktopWidget, QCheckBox, QAbstractSpinBox
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import QApplication, QDesktopWidget, QAbstractSpinBox, QMainWindow
+from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl
 from scipy.io.wavfile import write as write_wav
@@ -16,80 +14,29 @@ appid = 'Wave_Analysis'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Wave Parameters")
-        self.setGeometry(50, int(QDesktopWidget().screenGeometry().height() / 2) - 150, 400, 300)
+        uic.loadUi("assets/MainWindow.ui", self)
         self.setWindowIcon(QtGui.QIcon('assets/icon.svg'))
         self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint) # Force top level
+        self.installEventFilter(self)
+        self.move_to_primary_monitor()
 
         self.plot_window = None
         self.media_player = QMediaPlayer()
-        layout = QVBoxLayout()
 
-        button_layout = QHBoxLayout()
-        self.play_wave_1_but = QPushButton("Play Wave 1")
-        self.play_wave_2_but = QPushButton("Play Wave 2")
-        self.play_combined_but = QPushButton("Play Combined")
         self.play_wave_1_but.clicked.connect(self.play_wave_1)
         self.play_wave_2_but.clicked.connect(self.play_wave_2)
         self.play_combined_but.clicked.connect(self.play_combined)
+        self.plot_button.clicked.connect(self.plot)
 
-        button_layout.addWidget(self.play_wave_1_but)
-        button_layout.addWidget(self.play_wave_2_but)
-        button_layout.addWidget(self.play_combined_but)
-        layout.addLayout(button_layout)
-
-        self.amplitude_input = QSpinBox()
-        self.amplitude_input.setRange(0, 1000)
-        self.amplitude_input.setValue(1)
-        layout.addWidget(QLabel("Amplitude"))
-        layout.addWidget(self.amplitude_input)
-
-        self.frequency1_input = QSpinBox()
-        self.frequency1_input.setRange(0, 100000)
-        self.frequency1_input.setValue(1000)
-        self.frequency1_input.setSingleStep(100)
         self.frequency1_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         self.frequency1_input.valueChanged.connect(self.change_default_duration)
-        layout.addWidget(QLabel("Wave 1 Frequency (Hz)"))
-        layout.addWidget(self.frequency1_input)
-
-        self.frequency2_input = QSpinBox()
-        self.frequency2_input.setRange(0, 100000)
-        self.frequency2_input.setValue(5000)
-        self.frequency2_input.setSingleStep(100)
         self.frequency2_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         self.frequency2_input.valueChanged.connect(self.change_default_duration)
-        layout.addWidget(QLabel("Wave 2 Frequency (Hz)"))
-        layout.addWidget(self.frequency2_input)
-
-        self.sample_rate_input = QSpinBox()
-        self.sample_rate_input.setRange(0, 1000000)
-        self.sample_rate_input.setValue(44000)
-        self.sample_rate_input.setSingleStep(100)
         self.sample_rate_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
-        layout.addWidget(QLabel("Sample Rate (Hz)"))
-        layout.addWidget(self.sample_rate_input)
 
-        self.duration_input = QDoubleSpinBox()
-        self.duration_input.setRange(0.002, 0.20)
-        self.duration_input.setSingleStep(0.001)
-        self.duration_input.setDecimals(3)
-        self.duration_input.setValue(0.020)
-        layout.addWidget(QLabel("Duration (s)"))
-        layout.addWidget(self.duration_input)
-
-        self.scale_axes = QCheckBox("Scale Axes to Peaks")
-        self.scale_axes.setChecked(True)
-        layout.addWidget(self.scale_axes)
-
-        self.plot_button = QPushButton("Plot")
-        self.plot_button.clicked.connect(self.plot)
-        layout.addWidget(self.plot_button)
-
-        self.setLayout(layout)
 
     def play_wave_1(self):
         self.media_player.stop()
@@ -145,7 +92,7 @@ class MainWindow(QWidget):
         self.media_player.play()
 
     def change_default_duration(self):
-        # when the min frequency is too small without a long enough duration, the increments for FFQ don't give correct indexes
+        # when the min frequency is too small without a long enough duration, the increments for FFT don't give correct indexes
         max_freq = max([self.frequency1_input.value(), self.frequency2_input.value()])
         min_freq = min([self.frequency1_input.value(), self.frequency2_input.value()])
         if min_freq < 100:
@@ -154,10 +101,10 @@ class MainWindow(QWidget):
         if min_freq <= 200:
             self.duration_input.setValue(0.020)
             return
-        if max_freq < 10000 and max_freq > 1000:
+        if max_freq < 10000:
             self.duration_input.setValue(0.005)
             return
-        if max_freq > 10000:
+        if max_freq > 10000 and min_freq > 10000:
             self.duration_input.setValue(0.002)
             return
 
@@ -313,6 +260,22 @@ class MainWindow(QWidget):
 
         plt.tight_layout()
         self.plot_window.show()
+
+    def move_to_primary_monitor(self):
+        desktop = QApplication.desktop()
+        width = 0
+        active_screen = None
+
+        for screen in range(desktop.screenCount()):
+            screen_geometry = desktop.screenGeometry(screen)
+            if screen_geometry.width() > width:
+                width = screen_geometry.width()
+                active_screen = screen
+
+        if active_screen is not None:
+            screen_geometry = desktop.screenGeometry(active_screen)
+            self.move(screen_geometry.topLeft())
+            self.setGeometry(int((QDesktopWidget().screenGeometry().width() / 2) * 0.05), int(QDesktopWidget().screenGeometry().height() / 2) - 150, 400, 200)
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         if self.plot_window is not None:
