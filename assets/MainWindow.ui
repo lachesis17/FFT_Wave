@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>400</height>
+    <height>475</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -96,6 +96,48 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Wave 1 Type:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QRadioButton" name="sine_1">
+          <property name="text">
+           <string>Sine</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="square_1">
+          <property name="text">
+           <string>Square</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="triangle_1">
+          <property name="text">
+           <string>Triangle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="saw_1">
+          <property name="text">
+           <string>Saw</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>Wave 2 Frequency (Hz)</string>
@@ -114,6 +156,48 @@
          <number>5000</number>
         </property>
        </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Wave 2 Type:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QRadioButton" name="sine_2">
+          <property name="text">
+           <string>Sine</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="square_2">
+          <property name="text">
+           <string>Square</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="triangle_2">
+          <property name="text">
+           <string>Triangle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="saw_2">
+          <property name="text">
+           <string>Saw</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QLabel" name="label_4">
@@ -162,14 +246,25 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="scale_axes">
-        <property name="text">
-         <string>Scale FFT X Axes to Peaks</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QCheckBox" name="scale_axes">
+          <property name="text">
+           <string>Scale FFT X Axes to Peaks</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="hann_check">
+          <property name="text">
+           <string>Hann Window FFT</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QPushButton" name="plot_button">

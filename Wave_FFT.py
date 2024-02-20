@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QDesktopWidget, QAbstractSpinBox, QMainWindow
+from PyQt5.QtWidgets import QApplication, QDesktopWidget, QAbstractSpinBox, QMainWindow, QButtonGroup
 from PyQt5 import QtCore, QtWidgets, QtGui, uic
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtCore import QUrl
@@ -25,11 +25,25 @@ class MainWindow(QMainWindow):
 
         self.plot_window = None
         self.media_player = QMediaPlayer()
+        self.hann = False
 
         self.play_wave_1_but.clicked.connect(self.play_wave_1)
         self.play_wave_2_but.clicked.connect(self.play_wave_2)
         self.play_combined_but.clicked.connect(self.play_combined)
         self.plot_button.clicked.connect(self.plot)
+        self.hann_check.stateChanged.connect(lambda s: self.set_hann(s))
+
+        self.wave_1_group = QButtonGroup()
+        wave_1_types = [self.sine_1, self.square_1, self.triangle_1, self.saw_1]
+        for wave in wave_1_types:
+            self.wave_1_group.addButton(wave)
+        self.sine_1.setChecked(True)
+
+        self.wave_2_group = QButtonGroup()
+        wave_2_types = [self.sine_2, self.square_2, self.triangle_2, self.saw_2]
+        for wave in wave_2_types:
+            self.wave_2_group.addButton(wave)
+        self.sine_2.setChecked(True)
 
         self.frequency1_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
         self.frequency1_input.valueChanged.connect(self.change_default_duration)
@@ -37,6 +51,9 @@ class MainWindow(QMainWindow):
         self.frequency2_input.valueChanged.connect(self.change_default_duration)
         self.sample_rate_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
 
+    def set_hann(self, state):
+        toggle = bool(state)
+        self.hann = toggle
 
     def play_wave_1(self):
         self.media_player.stop()
@@ -46,7 +63,16 @@ class MainWindow(QMainWindow):
         t = np.linspace(0., 1., samplerate)
         amplitude = np.iinfo(np.int16).max
         fs = self.frequency1_input.value()
-        data = amplitude * np.sin(2. * np.pi * fs * t)
+
+        if self.sine_1.isChecked():
+            data = amplitude * np.sin(2. * np.pi * fs * t) # Wave 1 Sine
+        elif self.square_1.isChecked():
+            data = amplitude * np.sign(np.sin(2. * np.pi * fs * t)) # Wave 1 Square
+        elif self.triangle_1.isChecked():
+            data = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs * t)) # Wave 1 Triangle
+        elif self.saw_1.isChecked():
+            data = amplitude * (2. * (fs * t - np.floor(0.5 + fs * t))) # Wave 1 Saw
+        
         wave_file = "Wave_1.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
 
@@ -63,7 +89,16 @@ class MainWindow(QMainWindow):
         t = np.linspace(0., 1., samplerate)
         amplitude = np.iinfo(np.int16).max
         fs = self.frequency2_input.value()
-        data = amplitude * np.sin(2. * np.pi * fs * t)
+
+        if self.sine_2.isChecked():
+            data = amplitude * np.sin(2. * np.pi * fs * t) # Wave 2 Sine
+        elif self.square_2.isChecked():
+            data = amplitude * np.sign(np.sin(2. * np.pi * fs * t)) # Wave 2 Square
+        elif self.triangle_2.isChecked():
+            data = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs * t)) # Wave 2 Triangle
+        elif self.saw_2.isChecked():
+            data = amplitude * (2. * (fs * t - np.floor(0.5 + fs * t))) # Wave 2 Saw
+
         wave_file = "Wave_2.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
 
@@ -79,10 +114,29 @@ class MainWindow(QMainWindow):
         samplerate = self.sample_rate_input.value()
         t = np.linspace(0., 1., samplerate)
         amplitude = np.iinfo(np.int16).max
+
         fs1 = self.frequency1_input.value()
-        data1 = amplitude * np.sin(2. * np.pi * fs1 * t)
+        if self.sine_1.isChecked():
+            data1 = amplitude * np.sin(2. * np.pi * fs1 * t) # Wave 1 Sine
+        elif self.square_1.isChecked():
+            data1 = amplitude * np.sign(np.sin(2. * np.pi * fs1 * t)) # Wave 1 Square
+        elif self.triangle_1.isChecked():
+            data1 = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs1 * t)) # Wave 1 Triangle
+        elif self.saw_1.isChecked():
+            data1 = amplitude * (2. * (fs1 * t - np.floor(0.5 + fs1 * t))) # Wave 1 Saw
+
         fs2 = self.frequency2_input.value()
         data2 = amplitude * np.sin(2. * np.pi * fs2 * t)
+
+        if self.sine_2.isChecked():
+            data2 = amplitude * np.sin(2. * np.pi * fs2 * t) # Wave 2 Sine
+        elif self.square_2.isChecked():
+            data2 = amplitude * np.sign(np.sin(2. * np.pi * fs2 * t)) # Wave 2 Square
+        elif self.triangle_2.isChecked():
+            data2 = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs2 * t)) # Wave 2 Triangle
+        elif self.saw_2.isChecked():
+            data2 = amplitude * (2. * (fs2 * t - np.floor(0.5 + fs2 * t))) # Wave 2 Saw
+
         data = data1 + data2
         wave_file = "Wave_Combined.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
@@ -111,8 +165,10 @@ class MainWindow(QMainWindow):
 
 
     def do_fft(self, duration, y):
-        fft_amp = fft.fft(y, overwrite_x=False)
         num_samples = len(y)
+        if self.hann:
+            y = y * np.hanning(num_samples)   # hann window = 0.5 * (1 - np.cos(2 * np.pi * np.arange(num_samples) / (num_samples - 1)))
+        fft_amp = fft.fft(y, overwrite_x=False)
         sample_rate = num_samples / duration
         freq = (sample_rate / num_samples) * np.arange(0, (num_samples / 2) + 1)
         amp = np.abs(fft_amp)[0:(np.int_(len(fft_amp) / 2) + 1)]
@@ -144,29 +200,43 @@ class MainWindow(QMainWindow):
         print("Sample Rate:", fs)
         print("Duration:", duration)
 
-        t1 = np.linspace(0, duration, int(fs * duration)) # Time 1
-        t2 = np.linspace(0, duration, int(fs * duration)) # Time 2
+        t = np.linspace(0, duration, int(fs * duration)) # Time
 
-        y1 = amp * np.sin(2 * np.pi * f1 * t1) # Wave 1
-        y2 = amp * np.sin(2 * np.pi * f2 * t2) # Wave 2
+        if self.sine_1.isChecked():
+            y1 = amp * np.sin(2 * np.pi * f1 * t) # Wave 1 Sine
+        elif self.square_1.isChecked():
+            y1 = amp * np.sign(np.sin(2 * np.pi * f1 * t)) # Wave 1 Square
+        elif self.triangle_1.isChecked():
+            y1 = amp * (2 / np.pi) * np.arcsin(np.sin(2 * np.pi * f1 * t)) # Wave 1 Triangle
+        elif self.saw_1.isChecked():
+            y1 = amp * (2 * (f1 * t - np.floor(0.5 + f1 * t))) # Wave 1 Saw
+        
+        if self.sine_2.isChecked():
+            y2 = amp * np.sin(2 * np.pi * f2 * t) # Wave 2 Sine
+        elif self.square_2.isChecked():
+            y2 = amp * np.sign(np.sin(2 * np.pi * f2 * t)) # Wave 2 Square
+        elif self.triangle_2.isChecked():
+            y2 = amp * (2 / np.pi) * np.arcsin(np.sin(2 * np.pi * f2 * t)) # Wave 2 Triangle
+        elif self.saw_2.isChecked():
+            y2 = amp * (2 * (f2 * t - np.floor(0.5 + f2 * t))) # Wave 2 Saw
 
         self.plot_window = plt.figure(num="Sine Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
 
         df = pd.DataFrame()
         df[f'{f1} hz Freq'] = y1
-        df[f'{f1} hz Time'] = t1
+        df[f'{f1} hz Time'] = t
         df[f'{f2} hz Freq'] = y2
-        df[f'{f2} hz Time'] = t2
+        df[f'{f2} hz Time'] = t
 
         plt.subplot(3, 2, 1)
-        plt.plot(t1, y1)
+        plt.plot(t, y1)
         plt.title(f'Sine Wave at {f1} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
         plt.subplot(3, 2, 2)
-        plt.plot(t2, y2)
+        plt.plot(t, y2)
         plt.title(f'Sine Wave at {f2} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
@@ -225,10 +295,10 @@ class MainWindow(QMainWindow):
         y_combined = y1 + y2
 
         df[f'Combined Freq'] = y_combined
-        df[f'Combined Time'] = t1
+        df[f'Combined Time'] = t
 
         plt.subplot(3, 2, 5)
-        plt.plot(t1, y_combined)
+        plt.plot(t, y_combined)
         plt.title('Combined Waves', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
@@ -275,7 +345,7 @@ class MainWindow(QMainWindow):
         if active_screen is not None:
             screen_geometry = desktop.screenGeometry(active_screen)
             self.move(screen_geometry.topLeft())
-            self.setGeometry(int((QDesktopWidget().screenGeometry().width() / 2) * 0.05), int(QDesktopWidget().screenGeometry().height() / 2) - 150, 400, 200)
+            self.setGeometry(int((QDesktopWidget().screenGeometry().width() / 2) * 0.05), int(QDesktopWidget().screenGeometry().height() / 2) - 238, 400, 200)
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         if self.plot_window is not None:
