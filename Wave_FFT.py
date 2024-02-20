@@ -126,8 +126,6 @@ class MainWindow(QMainWindow):
             data1 = amplitude * (2. * (fs1 * t - np.floor(0.5 + fs1 * t))) # Wave 1 Saw
 
         fs2 = self.frequency2_input.value()
-        data2 = amplitude * np.sin(2. * np.pi * fs2 * t)
-
         if self.sine_2.isChecked():
             data2 = amplitude * np.sin(2. * np.pi * fs2 * t) # Wave 2 Sine
         elif self.square_2.isChecked():
