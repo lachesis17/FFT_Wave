@@ -25,13 +25,11 @@ class MainWindow(QMainWindow):
 
         self.plot_window = None
         self.media_player = QMediaPlayer()
-        self.hann = False
 
         self.play_wave_1_but.clicked.connect(self.play_wave_1)
         self.play_wave_2_but.clicked.connect(self.play_wave_2)
         self.play_combined_but.clicked.connect(self.play_combined)
         self.plot_button.clicked.connect(self.plot)
-        self.hann_check.stateChanged.connect(lambda s: self.set_hann(s))
 
         self.wave_1_group = QButtonGroup()
         wave_1_types = [self.sine_1, self.square_1, self.triangle_1, self.saw_1]
@@ -51,9 +49,17 @@ class MainWindow(QMainWindow):
         self.frequency2_input.valueChanged.connect(self.change_default_duration)
         self.sample_rate_input.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
 
-    def set_hann(self, state):
-        toggle = bool(state)
-        self.hann = toggle
+    def sine_wave(self, amp, fs, t):
+        return amp * np.sin(2. * np.pi * fs * t)
+    
+    def square_wave(self, amp, fs, t):
+        return amp * np.sign(np.sin(2. * np.pi * fs * t))
+
+    def triangle_wave(self, amp, fs, t):
+        return amp * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs * t))
+
+    def saw_wave(self, amp, fs, t):
+        return amp * (2. * (fs * t - np.floor(0.5 + fs * t)))
 
     def play_wave_1(self):
         self.media_player.stop()
@@ -65,13 +71,13 @@ class MainWindow(QMainWindow):
         fs = self.frequency1_input.value()
 
         if self.sine_1.isChecked():
-            data = amplitude * np.sin(2. * np.pi * fs * t) # Wave 1 Sine
+            data = self.sine_wave(amp=amplitude, fs=fs, t=t) # Wave 1 Sine
         elif self.square_1.isChecked():
-            data = amplitude * np.sign(np.sin(2. * np.pi * fs * t)) # Wave 1 Square
+            data = self.square_wave(amp=amplitude, fs=fs, t=t) # Wave 1 Square
         elif self.triangle_1.isChecked():
-            data = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs * t)) # Wave 1 Triangle
+            data = self.triangle_wave(amp=amplitude, fs=fs, t=t) # Wave 1 Triangle
         elif self.saw_1.isChecked():
-            data = amplitude * (2. * (fs * t - np.floor(0.5 + fs * t))) # Wave 1 Saw
+            data = self.saw_wave(amp=amplitude, fs=fs, t=t) # Wave 1 Saw
         
         wave_file = "Wave_1.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
@@ -91,13 +97,13 @@ class MainWindow(QMainWindow):
         fs = self.frequency2_input.value()
 
         if self.sine_2.isChecked():
-            data = amplitude * np.sin(2. * np.pi * fs * t) # Wave 2 Sine
+            data = self.sine_wave(amp=amplitude, fs=fs, t=t) # Wave 2 Sine
         elif self.square_2.isChecked():
-            data = amplitude * np.sign(np.sin(2. * np.pi * fs * t)) # Wave 2 Square
+            data = self.square_wave(amp=amplitude, fs=fs, t=t) # Wave 2 Square
         elif self.triangle_2.isChecked():
-            data = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs * t)) # Wave 2 Triangle
+            data = self.triangle_wave(amp=amplitude, fs=fs, t=t) # Wave 2 Triangle
         elif self.saw_2.isChecked():
-            data = amplitude * (2. * (fs * t - np.floor(0.5 + fs * t))) # Wave 2 Saw
+            data = self.saw_wave(amp=amplitude, fs=fs, t=t) # Wave 2 Saw
 
         wave_file = "Wave_2.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
@@ -117,23 +123,23 @@ class MainWindow(QMainWindow):
 
         fs1 = self.frequency1_input.value()
         if self.sine_1.isChecked():
-            data1 = amplitude * np.sin(2. * np.pi * fs1 * t) # Wave 1 Sine
+            data1 = self.sine_wave(amp=amplitude, fs=fs1, t=t) # Wave 1 Sine
         elif self.square_1.isChecked():
-            data1 = amplitude * np.sign(np.sin(2. * np.pi * fs1 * t)) # Wave 1 Square
+            data1 = self.square_wave(amp=amplitude, fs=fs1, t=t) # Wave 1 Square
         elif self.triangle_1.isChecked():
-            data1 = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs1 * t)) # Wave 1 Triangle
+            data1 = self.triangle_wave(amp=amplitude, fs=fs1, t=t) # Wave 1 Triangle
         elif self.saw_1.isChecked():
-            data1 = amplitude * (2. * (fs1 * t - np.floor(0.5 + fs1 * t))) # Wave 1 Saw
+            data1 = self.saw_wave(amp=amplitude, fs=fs1, t=t) # Wave 1 Saw
 
         fs2 = self.frequency2_input.value()
         if self.sine_2.isChecked():
-            data2 = amplitude * np.sin(2. * np.pi * fs2 * t) # Wave 2 Sine
+            data2 = self.sine_wave(amp=amplitude, fs=fs2, t=t) # Wave 2 Sine
         elif self.square_2.isChecked():
-            data2 = amplitude * np.sign(np.sin(2. * np.pi * fs2 * t)) # Wave 2 Square
+            data2 = self.square_wave(amp=amplitude, fs=fs2, t=t) # Wave 2 Square
         elif self.triangle_2.isChecked():
-            data2 = amplitude * (2. / np.pi) * np.arcsin(np.sin(2. * np.pi * fs2 * t)) # Wave 2 Triangle
+            data2 = self.triangle_wave(amp=amplitude, fs=fs2, t=t) # Wave 2 Triangle
         elif self.saw_2.isChecked():
-            data2 = amplitude * (2. * (fs2 * t - np.floor(0.5 + fs2 * t))) # Wave 2 Saw
+            data2 = self.saw_wave(amp=amplitude, fs=fs2, t=t) # Wave 2 Saw
 
         data = data1 + data2
         wave_file = "Wave_Combined.wav"
@@ -164,7 +170,7 @@ class MainWindow(QMainWindow):
 
     def do_fft(self, duration, y):
         num_samples = len(y)
-        if self.hann:
+        if self.hann_check.isChecked():
             y = y * np.hanning(num_samples)   # hann window = 0.5 * (1 - np.cos(2 * np.pi * np.arange(num_samples) / (num_samples - 1)))
         fft_amp = fft.fft(y, overwrite_x=False)
         sample_rate = num_samples / duration
@@ -201,24 +207,32 @@ class MainWindow(QMainWindow):
         t = np.linspace(0, duration, int(fs * duration)) # Time
 
         if self.sine_1.isChecked():
-            y1 = amp * np.sin(2 * np.pi * f1 * t) # Wave 1 Sine
+            wave_1_type = "Sine"
+            y1 = self.sine_wave(amp=amp, fs=f1, t=t) # Wave 1 Sine
         elif self.square_1.isChecked():
-            y1 = amp * np.sign(np.sin(2 * np.pi * f1 * t)) # Wave 1 Square
+            wave_1_type = "Square"
+            y1 = self.square_wave(amp=amp, fs=f1, t=t) # Wave 1 Square
         elif self.triangle_1.isChecked():
-            y1 = amp * (2 / np.pi) * np.arcsin(np.sin(2 * np.pi * f1 * t)) # Wave 1 Triangle
+            wave_1_type = "Triangle"
+            y1 = self.triangle_wave(amp=amp, fs=f1, t=t) # Wave 1 Triangle
         elif self.saw_1.isChecked():
-            y1 = amp * (2 * (f1 * t - np.floor(0.5 + f1 * t))) # Wave 1 Saw
+            wave_1_type = "Saw"
+            y1 = self.saw_wave(amp=amp, fs=f1, t=t) # Wave 1 Saw
         
         if self.sine_2.isChecked():
-            y2 = amp * np.sin(2 * np.pi * f2 * t) # Wave 2 Sine
+            wave_2_type = "Sine"
+            y2 = self.sine_wave(amp=amp, fs=f2, t=t) # Wave 2 Sine
         elif self.square_2.isChecked():
-            y2 = amp * np.sign(np.sin(2 * np.pi * f2 * t)) # Wave 2 Square
+            wave_2_type = "Square"
+            y2 = self.square_wave(amp=amp, fs=f2, t=t) # Wave 2 Square
         elif self.triangle_2.isChecked():
-            y2 = amp * (2 / np.pi) * np.arcsin(np.sin(2 * np.pi * f2 * t)) # Wave 2 Triangle
+            wave_2_type = "Triangle"
+            y2 = self.triangle_wave(amp=amp, fs=f2, t=t) # Wave 2 Triangle
         elif self.saw_2.isChecked():
-            y2 = amp * (2 * (f2 * t - np.floor(0.5 + f2 * t))) # Wave 2 Saw
+            wave_2_type = "Saw"
+            y2 = self.saw_wave(amp=amp, fs=f2, t=t) # Wave 2 Saw
 
-        self.plot_window = plt.figure(num="Sine Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
+        self.plot_window = plt.figure(num="Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
 
         df = pd.DataFrame()
         df[f'{f1} hz Freq'] = y1
@@ -228,14 +242,14 @@ class MainWindow(QMainWindow):
 
         plt.subplot(3, 2, 1)
         plt.plot(t, y1)
-        plt.title(f'Sine Wave at {f1} Hz', fontsize=8)
+        plt.title(f'{wave_1_type} Wave at {f1} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
         plt.subplot(3, 2, 2)
         plt.plot(t, y2)
-        plt.title(f'Sine Wave at {f2} Hz', fontsize=8)
+        plt.title(f'{wave_2_type} Wave at {f2} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
