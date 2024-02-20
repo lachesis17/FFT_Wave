@@ -42,9 +42,10 @@ class MainWindow(QMainWindow):
         self.media_player.stop()
         self.media_player.setMedia(QMediaContent(None))
 
-        samplerate = self.sample_rate_input.value(); fs = self.frequency1_input.value()
+        samplerate = self.sample_rate_input.value()
         t = np.linspace(0., 1., samplerate)
         amplitude = np.iinfo(np.int16).max
+        fs = self.frequency1_input.value()
         data = amplitude * np.sin(2. * np.pi * fs * t)
         wave_file = "Wave_1.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
@@ -58,9 +59,10 @@ class MainWindow(QMainWindow):
         self.media_player.stop()
         self.media_player.setMedia(QMediaContent(None))
 
-        samplerate = self.sample_rate_input.value(); fs = self.frequency2_input.value()
+        samplerate = self.sample_rate_input.value()
         t = np.linspace(0., 1., samplerate)
         amplitude = np.iinfo(np.int16).max
+        fs = self.frequency2_input.value()
         data = amplitude * np.sin(2. * np.pi * fs * t)
         wave_file = "Wave_2.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
@@ -74,14 +76,13 @@ class MainWindow(QMainWindow):
         self.media_player.stop()
         self.media_player.setMedia(QMediaContent(None))
 
-        samplerate = self.sample_rate_input.value(); fs = self.frequency1_input.value()
+        samplerate = self.sample_rate_input.value()
         t = np.linspace(0., 1., samplerate)
         amplitude = np.iinfo(np.int16).max
-        data1 = amplitude * np.sin(2. * np.pi * fs * t)
-        samplerate = self.sample_rate_input.value(); fs = self.frequency2_input.value()
-        t = np.linspace(0., 1., samplerate)
-        amplitude = np.iinfo(np.int16).max
-        data2 = amplitude * np.sin(2. * np.pi * fs * t)
+        fs1 = self.frequency1_input.value()
+        data1 = amplitude * np.sin(2. * np.pi * fs1 * t)
+        fs2 = self.frequency2_input.value()
+        data2 = amplitude * np.sin(2. * np.pi * fs2 * t)
         data = data1 + data2
         wave_file = "Wave_Combined.wav"
         write_wav(wave_file, samplerate, data.astype(np.int16))
@@ -110,20 +111,19 @@ class MainWindow(QMainWindow):
 
 
     def do_fft(self, duration, y):
-        fft_s = fft.fft(y, overwrite_x=False)
-        time = duration
+        fft_amp = fft.fft(y, overwrite_x=False)
         num_samples = len(y)
-        sample_rate = num_samples / time
+        sample_rate = num_samples / duration
         freq = (sample_rate / num_samples) * np.arange(0, (num_samples / 2) + 1)
-        amp = np.abs(fft_s)[0:(np.int_(len(fft_s) / 2) + 1)]
+        amp = np.abs(fft_amp)[0:(np.int_(len(fft_amp) / 2) + 1)]
 
         if len(freq) != len(amp):
             if len(freq) > len(amp):
-                c = len(freq) - len(amp)
-                freq = freq[:len(freq) - c]
+                diff = len(freq) - len(amp)
+                freq = freq[:len(freq) - diff]
             else:
-                c = len(amp) - len(freq)
-                amp = amp[:len(amp) - c]
+                diff = len(amp) - len(freq)
+                amp = amp[:len(amp) - diff]
 
         return freq, amp
 
