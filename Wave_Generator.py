@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
             return
 
 
-    def do_fft(self, duration, y):
+    def apply_fft(self, duration, y):
         num_samples = len(y)
         if self.hann_check.isChecked():
             y = y * np.hanning(num_samples)   # hann window = 0.5 * (1 - np.cos(2 * np.pi * np.arange(num_samples) / (num_samples - 1)))
@@ -193,79 +193,79 @@ class MainWindow(QMainWindow):
             plt.close(self.plot_window)
     
         amp = self.amplitude_input.value()
-        f1 = self.frequency1_input.value()
-        f2 = self.frequency2_input.value()
-        fs = self.sample_rate_input.value()
+        fs1 = self.frequency1_input.value()
+        fs2 = self.frequency2_input.value()
+        f0 = self.sample_rate_input.value()
         duration = self.duration_input.value()
 
         print("Amplitude:", amp)
-        print("Frequency 1:", f1)
-        print("Frequency 2:", f2)
-        print("Sample Rate:", fs)
+        print("Frequency 1:", fs1)
+        print("Frequency 2:", fs2)
+        print("Sample Rate:", f0)
         print("Duration:", duration)
 
-        t = np.linspace(0, duration, int(fs * duration)) # Time
+        t = np.linspace(0, duration, int(f0 * duration)) # Time
 
         if self.sine_1.isChecked():
             wave_1_type = "Sine"
-            y1 = self.sine_wave(amp=amp, fs=f1, t=t) # Wave 1 Sine
+            y1 = self.sine_wave(amp=amp, fs=fs1, t=t) # Wave 1 Sine
         elif self.square_1.isChecked():
             wave_1_type = "Square"
-            y1 = self.square_wave(amp=amp, fs=f1, t=t) # Wave 1 Square
+            y1 = self.square_wave(amp=amp, fs=fs1, t=t) # Wave 1 Square
         elif self.triangle_1.isChecked():
             wave_1_type = "Triangle"
-            y1 = self.triangle_wave(amp=amp, fs=f1, t=t) # Wave 1 Triangle
+            y1 = self.triangle_wave(amp=amp, fs=fs1, t=t) # Wave 1 Triangle
         elif self.saw_1.isChecked():
             wave_1_type = "Saw"
-            y1 = self.saw_wave(amp=amp, fs=f1, t=t) # Wave 1 Saw
+            y1 = self.saw_wave(amp=amp, fs=fs1, t=t) # Wave 1 Saw
         
         if self.sine_2.isChecked():
             wave_2_type = "Sine"
-            y2 = self.sine_wave(amp=amp, fs=f2, t=t) # Wave 2 Sine
+            y2 = self.sine_wave(amp=amp, fs=fs2, t=t) # Wave 2 Sine
         elif self.square_2.isChecked():
             wave_2_type = "Square"
-            y2 = self.square_wave(amp=amp, fs=f2, t=t) # Wave 2 Square
+            y2 = self.square_wave(amp=amp, fs=fs2, t=t) # Wave 2 Square
         elif self.triangle_2.isChecked():
             wave_2_type = "Triangle"
-            y2 = self.triangle_wave(amp=amp, fs=f2, t=t) # Wave 2 Triangle
+            y2 = self.triangle_wave(amp=amp, fs=fs2, t=t) # Wave 2 Triangle
         elif self.saw_2.isChecked():
             wave_2_type = "Saw"
-            y2 = self.saw_wave(amp=amp, fs=f2, t=t) # Wave 2 Saw
+            y2 = self.saw_wave(amp=amp, fs=fs2, t=t) # Wave 2 Saw
 
         self.plot_window = plt.figure(num="Wave Frequency Spectrums", figsize=(10, 6)) # Plot window
 
         df = pd.DataFrame()
-        df[f'{f1} hz Freq'] = y1
-        df[f'{f1} hz Time'] = t
-        df[f'{f2} hz Freq'] = y2
-        df[f'{f2} hz Time'] = t
+        df[f'{fs1} hz Freq'] = y1
+        df[f'{fs1} hz Time'] = t
+        df[f'{fs2} hz Freq'] = y2
+        df[f'{fs2} hz Time'] = t
 
         plt.subplot(3, 2, 1)
         plt.plot(t, y1)
-        plt.title(f'{wave_1_type} Wave at {f1} Hz', fontsize=8)
+        plt.title(f'{wave_1_type} Wave at {fs1} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
         plt.subplot(3, 2, 2)
         plt.plot(t, y2)
-        plt.title(f'{wave_2_type} Wave at {f2} Hz', fontsize=8)
+        plt.title(f'{wave_2_type} Wave at {fs2} Hz', fontsize=8)
         plt.xlabel('Time (s)', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
-        freq, amp = self.do_fft(y=y1, duration=duration)
+        freq, amp = self.apply_fft(y=y1, duration=duration)
 
         df2 = pd.DataFrame()
-        df2[f'FFT - {f1} hz Freq'] = freq
-        df2[f'FFT - {f1} hz FFT Amp'] = amp
+        df2[f'FFT - {fs1} hz Freq'] = freq
+        df2[f'FFT - {fs1} hz FFT Amp'] = amp
 
         idx_max_first = np.argmax(amp)
         print("Index of Max Amplitude Wave 1: ", idx_max_first)
-        print(f"Max Amp of {f1} Hz: ", amp[idx_max_first], f"Frequency of max Amp of {f1} Hz: ", freq[idx_max_first])
+        print(f"Max Amp of {fs1} Hz: ", amp[idx_max_first], f"Frequency of max Amp of {fs1} Hz: ", freq[idx_max_first])
 
         df3 = pd.DataFrame()
-        df3['Sample Rate'] = [fs]
+        df3['Sample Rate'] = [f0]
         df3['Max Amp (First Wave)'] = [amp[idx_max_first]]
         df3['Freq of Max Amp (First Wave)'] = [freq[idx_max_first]]
 
@@ -275,19 +275,19 @@ class MainWindow(QMainWindow):
 
         plt.subplot(3, 2, 3)
         plt.plot(freq, amp)
-        plt.title(f'{f1} Hz (FFT)', fontsize=8)
+        plt.title(f'{fs1} Hz (FFT)', fontsize=8)
         plt.xlabel('Frequency', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
-        freq, amp = self.do_fft(y=y2, duration=duration)
+        freq, amp = self.apply_fft(y=y2, duration=duration)
 
-        df2[f'FFT - {f2} hz Freq'] = freq
-        df2[f'FFT - {f2} hz FFT Amp'] = amp
+        df2[f'FFT - {fs2} hz Freq'] = freq
+        df2[f'FFT - {fs2} hz FFT Amp'] = amp
 
         idx_max_second = np.argmax(amp)
         print("Index of Max Amplitude Wave 2: ", idx_max_second)
-        print(f"Max Amp of {f2} Hz: ", amp[idx_max_second], f"Frequency of max Amp of {f2} Hz: ", freq[idx_max_second])
+        print(f"Max Amp of {fs2} Hz: ", amp[idx_max_second], f"Frequency of max Amp of {fs2} Hz: ", freq[idx_max_second])
 
         df3['Max Amp (Second Wave)'] = [amp[idx_max_second]]
         df3['Freq of Max Amp (Second Wave)'] = [freq[idx_max_second]]
@@ -298,7 +298,7 @@ class MainWindow(QMainWindow):
 
         plt.subplot(3, 2, 4)
         plt.plot(freq, amp)
-        plt.title(f'{f2} Hz (FFT)', fontsize=8)
+        plt.title(f'{fs2} Hz (FFT)', fontsize=8)
         plt.xlabel('Frequency', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
@@ -316,7 +316,7 @@ class MainWindow(QMainWindow):
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
 
-        freq, amp = self.do_fft(y=y_combined, duration=duration)
+        freq, amp = self.apply_fft(y=y_combined, duration=duration)
 
         df2['FFT - Combined Freq'] = freq
         df2['FFT - Combined FFT Amp'] = amp
@@ -334,7 +334,7 @@ class MainWindow(QMainWindow):
         plt.xlabel('Frequency', fontsize=8)
         plt.ylabel('Amplitude', fontsize=8)
         plt.grid(True)
-        plt.xlim(0, f2*2)
+        plt.xlim(0, fs2*2)
 
         df2 = pd.concat([df2, df3], axis=1)
         df = pd.concat([df, df2], axis=1)
