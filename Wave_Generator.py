@@ -172,7 +172,31 @@ class MainWindow(QMainWindow):
         num_samples = len(y)
         if self.hann_check.isChecked():
             y = y * np.hanning(num_samples)   # hann window = 0.5 * (1 - np.cos(2 * np.pi * np.arange(num_samples) / (num_samples - 1)))
-        fft_amp = fft.fft(y, overwrite_x=False)
+        
+        fft_mode = self.fft_combo.currentText()
+        print("FFT Mode: ", fft_mode)
+        
+        if fft_mode == "FFT - Fast Fourier Transform":
+            fft_amp = fft.fft(y, overwrite_x=False)
+        elif fft_mode == "IFFT - Inverse FFT":
+            fft_amp = fft.ifft(y, overwrite_x=False)
+        elif fft_mode == "RFFT- FFT of strictly real-valued sequence":
+            fft_amp = fft.rfft(y, overwrite_x=False)
+        elif fft_mode == "IRFFT - Inverse of RFFT":
+            fft_amp = fft.irfft(y, overwrite_x=False)
+        elif fft_mode == "HFFT - FFT of a Hermitian sequence (real spectrum)":
+            fft_amp = fft.hfft(y, overwrite_x=False)
+        elif fft_mode == "IHFFT - Inverse of HFFT":
+            fft_amp = fft.ihfft(y, overwrite_x=False)
+        elif fft_mode == "DCT - Discrete cosine transform":
+            fft_amp = fft.dct(y, overwrite_x=False)
+        elif fft_mode == "IDCT - Inverse DCT":
+            fft_amp = fft.idct(y, overwrite_x=False)
+        elif fft_mode == "DST - Discrete sine transform":
+            fft_amp = fft.dst(y, overwrite_x=False)
+        elif fft_mode == "IDST - Inverse DST":
+            fft_amp = fft.idst(y, overwrite_x=False)
+
         sample_rate = num_samples / duration
         freq = (sample_rate / num_samples) * np.arange(0, (num_samples / 2) + 1)
         amp = np.abs(fft_amp)[0:(np.int_(len(fft_amp) / 2) + 1)]
